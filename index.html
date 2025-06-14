@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Noemi & Percy - Álbum Fotográfico</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            touch-action: manipulation;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #1a2a6c);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            color: #fff;
+        }
+
+        .album-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.5);
+            padding: 30px;
+            max-width: 1400px;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .title-container {
+            text-align: center;
+            margin-bottom: 30px;
+            position: relative;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .title {
+            font-size: 42px;
+            color: #2c3e50;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+            font-weight: 700;
+            font-family: 'Playfair Display', serif;
+        }
+
+        .subtitle {
+            font-size: 18px;
+            color: #7f8c8d;
+            font-weight: 300;
+            letter-spacing: 2px;
+        }
+
+        .album-content {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .photo-display {
+            position: relative;
+            height: 70vh;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            touch-action: none;
+            cursor: grab;
+        }
+
+        .photo-display.dragging {
+            cursor: grabbing;
+        }
+
+        .photo-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .photo-display img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            transition: transform 0.1s ease;
+            will-change: transform;
+        }
+
+        .thumbnail-grid {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
+            max-height: 200px;
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
+
+        .thumbnail-grid h3 {
+            text-align: center;
+            margin-bottom: 15px;
+            color: #2c3e50;
+            font-size: 20px;
+        }
+
+        .thumbnails {
+            display: flex;
+            gap: 12px;
+            padding: 5px;
+        }
+
+        .thumbnail {
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            aspect-ratio: 4/3;
+            position: relative;
+            flex-shrink: 0;
+            width: 120px;
+            border: 3px solid transparent;
+        }
+
+        .thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .thumbnail:hover {
+            transform: scale(1.08);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+
+        .thumbnail.active {
+            border-color: #3498db;
+            transform: scale(1.1);
+            box-shadow: 0 8px 20px rgba(52, 152, 219, 0.6);
+        }
+
+        .thumbnail .number {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            background: rgba(52, 152, 219, 0.9);
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            padding: 0 20px;
+        }
+
+        .nav-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+        }
+
+        .nav-btn:hover {
+            background: #2980b9;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(52, 152, 219, 0.6);
+        }
+
+        .nav-btn:active {
+            transform: translateY(1px);
+        }
+
+        .nav-btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .page-info {
+            font-size: 22px;
+            font-weight: bold;
+            color: #2c3e50;
+            text-align: center;
+            background: #ecf0f1;
+            padding: 12px 30px;
+            border-radius: 50px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            min-width: 200px;
+        }
+
+        .loading {
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 24px;
+            padding: 50px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .album-meta {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-top: 25px;
+            font-size: 16px;
+            color: #2c3e50;
+        }
+
+        .album-meta div {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(236, 240, 241, 0.7);
+            padding: 10px 20px;
+            border-radius: 30px;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+        }
+
+        .key-hint {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 16px;
+            color: #2c3e50;
+            background: rgba(236, 240, 241, 0.7);
+            padding: 10px;
+            border-radius: 30px;
+            max-width: 500px;
+            margin: 20px auto 0;
+        }
+
+        .zoom-controls {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            z-index: 20;
+            display: flex;
+            gap: 10px;
+        }
+
+        .zoom-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(52, 152, 219, 0.8);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+            transition: all 0.2s;
+        }
+
+        .zoom-btn:hover {
+            background: #2980b9;
+            transform: scale(1.1);
+        }
+
+        .fullscreen-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 20;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s;
+        }
+
+        .fullscreen-btn:hover {
+            background: rgba(255, 255, 255, 0.5);
+            transform: scale(1.1);
+        }
+
+        .zoom-info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 20;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            backdrop-filter: blur(5px);
+        }
+
+        .drag-hint {
+            position: absolute;
+            bottom: 70px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: white;
+            font-size: 16px;
+            padding: 10px;
+            background: rgba(0,0,0,0.5);
+            z-index: 10;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+
+        .drag-hint.visible {
+            opacity: 1;
+        }
+
+        /* Animación para transición de fotos */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.6s ease-in-out;
+        }
+
+        @media (max-width: 1100px) {
+            .photo-display {
+                height: 60vh;
+            }
+            
+            .thumbnail {
+                width: 100px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .photo-display {
+                height: 50vh;
+            }
+            
+            .controls {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .nav-btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .album-meta {
+                flex-direction: column;
+                align-items: center;
+                gap: 15px;
+            }
+            
+            .thumbnail {
+                width: 90px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .photo-display {
+                height: 40vh;
+            }
+            
+            .title {
+                font-size: 32px;
+            }
+            
+            .subtitle {
+                font-size: 16px;
+            }
+            
+            .thumbnail {
+                width: 80px;
+            }
+            
+            .page-info {
+                font-size: 18px;
+                padding: 10px 20px;
+            }
+            
+            .zoom-controls {
+                bottom: 10px;
+                right: 10px;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="album-container">
+        <div class="title-container">
+            <h1 class="title">Noemi & Percy</h1>
+            <p class="subtitle">Recuerdos inolvidables de los mejores momentos</p>
+        </div>
+        
+        <div class="album-content">
+            <div class="photo-display" id="photoDisplay">
+                <div id="loading" class="loading">Cargando álbum...</div>
+                <div class="photo-container">
+                    <img id="currentPhoto" style="display: none;" alt="Foto actual">
+                </div>
+                <div class="drag-hint" id="dragHint">Mantén presionado y arrastra para explorar</div>
+                <div class="zoom-info" id="zoomInfo">Zoom: 100%</div>
+                
+                <div class="zoom-controls">
+                    <div class="zoom-btn" id="zoomInBtn">+</div>
+                    <div class="zoom-btn" id="zoomOutBtn">−</div>
+                    <div class="zoom-btn" id="resetZoomBtn">↺</div>
+                </div>
+                
+                <div class="fullscreen-btn" id="fullscreenBtn">⛶</div>
+            </div>
+            
+            <div class="thumbnail-grid">
+                <h3>Fotos</h3>
+                <div class="thumbnails" id="thumbnailsContainer">
+                    <!-- Las miniaturas se generarán con JavaScript -->
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button class="nav-btn" id="prevBtn">
+                <span>←</span> Anterior
+            </button>
+            <div class="page-info" id="pageInfo">Tapa</div>
+            <button class="nav-btn" id="nextBtn">
+                Siguiente <span>→</span>
+            </button>
+        </div>
+        
+        <div class="album-meta">
+            <div>
+                <span>📸</span>
+                <span>20 fotos</span>
+            </div>
+            <div>
+                <span>📅</span>
+                <span>26 de Abril del 2025</span>
+            </div>
+        </div>
+        
+        <div class="key-hint">
+            Usa las flechas ← → del teclado para navegar | Zoom: Rueda del ratón | Desplazamiento: Arrastrar | Pantalla Completa: F
+            <span>VIDEO DIGITAL - 995422484</span>
+        </div>
+    </div>
+
+    <script>
+        let currentPhotoIndex = 0;
+        let photos = [];
+        let loadedCount = 0;
+        let zoomLevel = 1;
+        let isFullscreen = false;
+        let translateX = 0;
+        let translateY = 0;
+        let isDragging = false;
+        let startX, startY;
+        let initialTranslateX, initialTranslateY;
+        let lastInteractionTime = 0;
+
+        // Inicializar
+        function init() {
+            loadPhotos();
+            createThumbnails();
+            updateControls();
+            setupDragEvents();
+            setupSwipeEvents();
+            
+            // Asignar eventos después de que se cargue el DOM
+            document.getElementById('prevBtn').addEventListener('click', previousPhoto);
+            document.getElementById('nextBtn').addEventListener('click', nextPhoto);
+            document.getElementById('zoomInBtn').addEventListener('click', zoomIn);
+            document.getElementById('zoomOutBtn').addEventListener('click', zoomOut);
+            document.getElementById('resetZoomBtn').addEventListener('click', resetTransform);
+            document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
+            
+            // Navegación con teclado
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'ArrowLeft') previousPhoto();
+                if (e.key === 'ArrowRight') nextPhoto();
+                if (e.key === 'f' || e.key === 'F') toggleFullscreen();
+                if (e.key === 'r' || e.key === 'R') resetTransform();
+            });
+            
+            // Zoom con rueda del ratón
+            document.getElementById('photoDisplay').addEventListener('wheel', function(e) {
+                e.preventDefault();
+                if (e.deltaY < 0) {
+                    zoomIn();
+                } else {
+                    zoomOut();
+                }
+            });
+            
+            // Mostrar pista de arrastre en desktop
+            showDragHint();
+        }
+
+        function setupDragEvents() {
+            const photoDisplay = document.getElementById('photoDisplay');
+            const currentPhoto = document.getElementById('currentPhoto');
+            
+            photoDisplay.addEventListener('mousedown', startDrag);
+            photoDisplay.addEventListener('touchstart', startDragTouch, { passive: false });
+            
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('touchmove', dragTouch, { passive: false });
+            
+            document.addEventListener('mouseup', endDrag);
+            document.addEventListener('touchend', endDrag);
+            
+            // Evitar el menú contextual al hacer clic derecho
+            photoDisplay.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+            });
+        }
+
+        function setupSwipeEvents() {
+            const photoDisplay = document.getElementById('photoDisplay');
+            
+            photoDisplay.addEventListener('touchstart', function(e) {
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+            }, { passive: true });
+            
+            photoDisplay.addEventListener('touchend', function(e) {
+                const touchEndX = e.changedTouches[0].clientX;
+                const touchEndY = e.changedTouches[0].clientY;
+                
+                const diffX = touchEndX - touchStartX;
+                const diffY = touchEndY - touchStartY;
+                
+                // Comprobar si es un desplazamiento horizontal significativo
+                if (Math.abs(diffX) > 50 && Math.abs(diffX) > Math.abs(diffY)) {
+                    const now = Date.now();
+                    
+                    // Prevenir múltiples deslizamientos rápidos
+                    if (now - lastInteractionTime > 300) {
+                        lastInteractionTime = now;
+                        
+                        if (diffX > 0) {
+                            // Deslizamiento hacia la derecha (anterior)
+                            previousPhoto();
+                        } else {
+                            // Deslizamiento hacia la izquierda (siguiente)
+                            nextPhoto();
+                        }
+                    }
+                }
+            }, { passive: true });
+        }
+
+        function startDrag(e) {
+            if (zoomLevel <= 1) return;
+            
+            isDragging = true;
+            startX = e.clientX - translateX;
+            startY = e.clientY - translateY;
+            initialTranslateX = translateX;
+            initialTranslateY = translateY;
+            document.getElementById('photoDisplay').classList.add('dragging');
+            hideDragHint();
+        }
+        
+        function startDragTouch(e) {
+            if (zoomLevel <= 1) return;
+            
+            e.preventDefault();
+            isDragging = true;
+            const touch = e.touches[0];
+            startX = touch.clientX - translateX;
+            startY = touch.clientY - translateY;
+            initialTranslateX = translateX;
+            initialTranslateY = translateY;
+            document.getElementById('photoDisplay').classList.add('dragging');
+            hideDragHint();
+        }
+
+        function drag(e) {
+            if (!isDragging || zoomLevel <= 1) return;
+            
+            translateX = e.clientX - startX;
+            translateY = e.clientY - startY;
+            applyTransform();
+        }
+        
+        function dragTouch(e) {
+            if (!isDragging || zoomLevel <= 1) return;
+            
+            e.preventDefault();
+            const touch = e.touches[0];
+            translateX = touch.clientX - startX;
+            translateY = touch.clientY - startY;
+            applyTransform();
+        }
+
+        function endDrag() {
+            isDragging = false;
+            document.getElementById('photoDisplay').classList.remove('dragging');
+        }
+
+        function showDragHint() {
+            const dragHint = document.getElementById('dragHint');
+            dragHint.classList.add('visible');
+            
+            // Ocultar después de 5 segundos
+            setTimeout(() => {
+                dragHint.classList.remove('visible');
+            }, 5000);
+        }
+
+        function hideDragHint() {
+            const dragHint = document.getElementById('dragHint');
+            dragHint.classList.remove('visible');
+        }
+
+        function loadPhotos() {
+            // Cargar tapa
+            loadPhoto('assets/tapa.jpg', 0);
+            
+            // Cargar fotos numeradas
+            for (let i = 1; i <= 20; i++) {
+                loadPhoto(`assets/${i}.jpg`, i);
+            }
+        }
+
+        function loadPhoto(src, index) {
+            const img = new Image();
+            img.onload = function() {
+                photos[index] = src;
+                photoLoaded();
+            };
+            img.onerror = function() {
+                // Usar un placeholder si falla la carga
+                photos[index] = 'https://picsum.photos/1200/800?random=' + index;
+                photoLoaded();
+            };
+            img.src = src;
+        }
+
+        function photoLoaded() {
+            loadedCount++;
+            if (loadedCount >= 21) {
+                document.getElementById('loading').style.display = 'none';
+                showCurrentPhoto();
+            }
+        }
+
+        function createThumbnails() {
+            const container = document.getElementById('thumbnailsContainer');
+            
+            // Miniatura para la tapa
+            const coverThumb = document.createElement('div');
+            coverThumb.className = 'thumbnail';
+            coverThumb.innerHTML = `
+                <img src="assets/tapa.jpg" alt="Tapa" onerror="this.src='https://via.placeholder.com/200x150?text=Tapa'">
+                <div class="number">0</div>
+            `;
+            coverThumb.addEventListener('click', () => goToPhoto(0));
+            container.appendChild(coverThumb);
+            
+            // Miniaturas para las fotos
+            for (let i = 1; i <= 20; i++) {
+                const thumb = document.createElement('div');
+                thumb.className = 'thumbnail';
+                thumb.innerHTML = `
+                    <img src="assets/${i}.jpg" alt="Foto ${i}" onerror="this.src='https://via.placeholder.com/200x150?text=Foto${i}'">
+                    <div class="number">${i}</div>
+                `;
+                thumb.addEventListener('click', () => goToPhoto(i));
+                container.appendChild(thumb);
+            }
+        }
+
+        function showCurrentPhoto() {
+            const currentPhoto = document.getElementById('currentPhoto');
+            const zoomInfo = document.getElementById('zoomInfo');
+            
+            // Aplicar clase de animación
+            currentPhoto.style.display = 'block';
+            currentPhoto.classList.add('fade-in');
+            
+            // Actualizar la imagen
+            currentPhoto.src = photos[currentPhotoIndex];
+            zoomInfo.textContent = `Zoom: ${Math.round(zoomLevel * 100)}%`;
+            
+            // Aplicar transformaciones
+            applyTransform();
+            
+            // Actualizar miniaturas activas
+            document.querySelectorAll('.thumbnail').forEach((thumb, index) => {
+                thumb.classList.toggle('active', index === currentPhotoIndex);
+            });
+            
+            // Remover clase de animación después de completarla
+            setTimeout(() => {
+                currentPhoto.classList.remove('fade-in');
+            }, 600);
+            
+            updateControls();
+        }
+        
+        function applyTransform() {
+            const currentPhoto = document.getElementById('currentPhoto');
+            currentPhoto.style.transform = `scale(${zoomLevel}) translate(${translateX}px, ${translateY}px)`;
+        }
+
+        function nextPhoto() {
+            if (currentPhotoIndex < photos.length - 1) {
+                currentPhotoIndex++;
+                resetTransform();
+                showCurrentPhoto();
+            }
+        }
+
+        function previousPhoto() {
+            if (currentPhotoIndex > 0) {
+                currentPhotoIndex--;
+                resetTransform();
+                showCurrentPhoto();
+            }
+        }
+
+        function goToPhoto(index) {
+            if (index >= 0 && index < photos.length && index !== currentPhotoIndex) {
+                currentPhotoIndex = index;
+                resetTransform();
+                showCurrentPhoto();
+            }
+        }
+
+        function zoomIn() {
+            if (zoomLevel < 3) {
+                zoomLevel += 0.1;
+                applyTransform();
+                updateZoomInfo();
+                hideDragHint();
+            }
+        }
+
+        function zoomOut() {
+            if (zoomLevel > 0.5) {
+                zoomLevel -= 0.1;
+                applyTransform();
+                updateZoomInfo();
+                
+                // Resetear posición si el zoom vuelve a 100%
+                if (zoomLevel <= 1) {
+                    resetPosition();
+                }
+            }
+        }
+
+        function resetTransform() {
+            zoomLevel = 1;
+            resetPosition();
+            applyTransform();
+            updateZoomInfo();
+        }
+        
+        function resetPosition() {
+            translateX = 0;
+            translateY = 0;
+        }
+        
+        function updateZoomInfo() {
+            const zoomInfo = document.getElementById('zoomInfo');
+            zoomInfo.textContent = `Zoom: ${Math.round(zoomLevel * 100)}%`;
+        }
+
+        function toggleFullscreen() {
+            const photoDisplay = document.querySelector('.photo-display');
+            
+            if (!isFullscreen) {
+                if (photoDisplay.requestFullscreen) {
+                    photoDisplay.requestFullscreen();
+                } else if (photoDisplay.mozRequestFullScreen) {
+                    photoDisplay.mozRequestFullScreen();
+                } else if (photoDisplay.webkitRequestFullscreen) {
+                    photoDisplay.webkitRequestFullscreen();
+                } else if (photoDisplay.msRequestFullscreen) {
+                    photoDisplay.msRequestFullscreen();
+                }
+                isFullscreen = true;
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+                isFullscreen = false;
+            }
+        }
+
+        function updateControls() {
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const pageInfo = document.getElementById('pageInfo');
+            
+            // Actualizar botones
+            prevBtn.disabled = currentPhotoIndex === 0;
+            nextBtn.disabled = currentPhotoIndex === photos.length - 1;
+            
+            // Actualizar contador
+            pageInfo.textContent = `Foto ${currentPhotoIndex} de ${photos.length - 1}`;
+        }
+
+        // Manejar cambios de pantalla completa
+        document.addEventListener('fullscreenchange', exitHandler);
+        document.addEventListener('webkitfullscreenchange', exitHandler);
+        document.addEventListener('mozfullscreenchange', exitHandler);
+        document.addEventListener('MSFullscreenChange', exitHandler);
+
+        function exitHandler() {
+            if (!document.fullscreenElement && 
+                !document.webkitIsFullScreen && 
+                !document.mozFullScreen && 
+                !document.msFullscreenElement) {
+                isFullscreen = false;
+            }
+        }
+
+        // Inicializar cuando carga la página
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
